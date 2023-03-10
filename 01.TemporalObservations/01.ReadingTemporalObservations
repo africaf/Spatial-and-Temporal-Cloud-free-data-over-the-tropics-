@@ -1,0 +1,205 @@
+//Reading Temporal cloud-free observations data 
+
+//Author: Africa I. Flores-Anderson
+//email: africa.flores-anderson@mail.mcgill.ca 
+
+var tropics = ee.FeatureCollection('projects/sentinelati-1547136065067/assets/tropics_dissolved')
+
+var numPalette = ['#fef0d9','#fdd49e','#fdbb84','#fc8d59','#ef6548','#d7301f','#990000'];
+
+//Calling data created 
+var IC_2021 = ee.ImageCollection('projects/sentinelati-1547136065067/assets/Temporal03/maxWaitDate2021').mosaic()
+var IC_2020 = ee.ImageCollection('projects/sentinelati-1547136065067/assets/Temporal03/maxWaitDate2020').mosaic()
+var IC_2019 = ee.ImageCollection('projects/sentinelati-1547136065067/assets/Temporal03/maxWaitDate2019').mosaic()
+var IC_2018 = ee.ImageCollection('projects/sentinelati-1547136065067/assets/Temporal03/maxWaitDate2018').mosaic()
+var IC_2017 = ee.ImageCollection('projects/sentinelati-1547136065067/assets/Temporal03/maxWaitDate2017').mosaic()
+
+var IC_2017Asia = ee.ImageCollection('users/africa_uah/Temporal03/maxWaitDate2017').mosaic()
+var IC_2018Asia = ee.ImageCollection('users/africa_uah/Temporal03/maxWaitDate2018').mosaic()
+var IC_2019Asia = ee.ImageCollection('users/africa_uah/Temporal03/maxWaitDate2019').mosaic()
+var IC_2020Asia = ee.ImageCollection('users/africa_uah/Temporal03/maxWaitDate2020').mosaic()
+var IC_2021Asia = ee.ImageCollection('users/africa_uah/Temporal03/maxWaitDate2021').mosaic()
+
+
+var Temp2021 = ee.ImageCollection([IC_2021, IC_2021Asia]).mosaic().clip(tropics)
+var Temp2020 = ee.ImageCollection([IC_2020, IC_2020Asia]).mosaic().clip(tropics)
+var Temp2019 = ee.ImageCollection([IC_2019, IC_2019Asia]).mosaic().clip(tropics)
+var Temp2018 = ee.ImageCollection([IC_2018, IC_2018Asia]).mosaic().clip(tropics)
+var Temp2017 = ee.ImageCollection([IC_2017,IC_2017Asia]).mosaic().clip(tropics)
+
+var monthViz = {min: 1, max: 12, palette: ['FFF8E6', 'FFE2DE', 'ADB2C5', 'B5CFD1', 'D9E4E6', '9DC2A2', 'B5ADC5', 'F8EDFF', 'FFE6FC', 'D3FFC9', 'F7FFBA', 'FF7763']};
+var quarterViz = {min: 1, max: 4, palette: ['edf8fb', 'b3cde3', '8c96c6', '88419d']};
+
+var maxViz = {min:0, max:300, palette:numPalette}
+
+//Visualize data in map viewer 
+Map.addLayer(Temp2021.select('max'), maxViz, 'Max Waiting time 2021')
+Map.addLayer(Temp2021.select('MaxDay'), {min:1, max:365}, 'Julian Date 2021', false)
+
+Map.addLayer(Temp2020.select('max'), maxViz, 'Max Waiting time 2020')
+Map.addLayer(Temp2020.select('MaxDay'), {min:1, max:365}, 'Julian Date 2020', false)
+
+Map.addLayer(Temp2019.select('max'), maxViz, 'Max Waiting time 2019')
+Map.addLayer(Temp2019.select('MaxDay'), {min:1, max:365}, 'Julian Date 2019', false)
+
+Map.addLayer(Temp2018.select('max'), maxViz, 'Max Waiting time 2018')
+Map.addLayer(Temp2018.select('MaxDay'), {min:1, max:365}, 'Julian Date 2018', false)
+
+Map.addLayer(Temp2017.select('max'), maxViz, 'Max Waiting time 2017')
+Map.addLayer(Temp2017.select('MaxDay'), {min:1, max:365}, 'Julian Date 2017', false)
+
+//Reclassify layers
+function Month(image){
+  var bandname = image.select('MaxDay');
+  return image.where(bandname.lte(31), 1)
+              .where(bandname.gt(31).and(bandname.lte(59)), 2)
+              .where(bandname.gt(59).and(bandname.lte(90)), 3)
+              .where(bandname.gt(90).and(bandname.lte(120)), 4)
+              .where(bandname.gt(120).and(bandname.lte(151)), 5)
+              .where(bandname.gt(151).and(bandname.lte(181)), 6)
+              .where(bandname.gt(181).and(bandname.lte(212)), 7)
+              .where(bandname.gt(212).and(bandname.lte(243)), 8)
+              .where(bandname.gt(243).and(bandname.lte(273)), 9)
+              .where(bandname.gt(273).and(bandname.lte(304)), 10)
+              .where(bandname.gt(304).and(bandname.lte(334)), 11)
+              .where(bandname.gt(334).and(bandname.lte(365)), 12)
+}
+
+function quarter(image){
+  var bandname = image.select('MaxDay');
+  return image.where(bandname.lte(3), 1)
+              .where(bandname.gt(3).and(bandname.lte(6)), 2)
+              .where(bandname.gt(6).and(bandname.lte(9)), 3)
+              .where(bandname.gt(9).and(bandname.lte(12)), 4)
+  
+}
+
+var month2021 = Month(Temp2021)
+var quarter2021 = quarter(month2021)
+
+var month2020 = Month(Temp2020)
+var quarter2020 = quarter(month2020)
+
+var month2019 = Month(Temp2019)
+var quarter2019 = quarter(month2019)
+
+var month2018 = Month(Temp2018)
+var quarter2018 = quarter(month2018)
+
+var month2017 = Month(Temp2017)
+var quarter2017 = quarter(month2017)
+
+//Map.addLayer(month2021.select('MaxDay'), monthViz, 'Month max 2021')
+Map.addLayer(quarter2021.select('MaxDay'), quarterViz, 'Quarter max 2021')
+Map.addLayer(quarter2020.select('MaxDay'), quarterViz, 'Quarter max 2020')
+Map.addLayer(quarter2019.select('MaxDay'), quarterViz, 'Quarter max 2019')
+Map.addLayer(quarter2018.select('MaxDay'), quarterViz, 'Quarter max 2018')
+Map.addLayer(quarter2017.select('MaxDay'), quarterViz, 'Quarter max 2017')
+
+
+/////***********Adding legends to map viewer for quarterly data and maximum # days*************/////////////// 
+// set position of panel
+var legend = ui.Panel({
+  style: {
+    position: 'bottom-left',
+    padding: '8px 15px'
+  }
+});
+
+// Create legend title
+var legendTitle = ui.Label({
+  value: 'Quarter',
+  style: {
+    fontWeight: 'bold',
+    fontSize: '18px',
+    margin: '0 0 4px 0',
+    padding: '0'
+    }
+});
+
+// Add the title to the panel
+legend.add(legendTitle);
+    
+// Creates and styles 1 row of the legend.
+var makeRow = function(color, name) {
+      
+      // Create the label that is actually the colored box.
+      var colorBox = ui.Label({
+        style: {
+          backgroundColor: '#' + color,
+          // Use padding to give the box height and width.
+          padding: '8px',
+          margin: '0 0 4px 0'
+        }
+      });
+      
+      // Create the label filled with the description text.
+      var description = ui.Label({
+        value: name,
+        style: {margin: '0 0 4px 6px'}
+      });
+      
+      // return the panel
+      return ui.Panel({
+        widgets: [colorBox, description],
+        layout: ui.Panel.Layout.Flow('horizontal')
+      });
+};
+
+
+//  Palette with the colors
+var palette =['edf8fb', 'b3cde3', '8c96c6', '88419d'];
+
+// name of the legend
+var names = ['Q1','Q2','Q3', 'Q4'];
+
+// Add color and and names
+for (var i = 0; i < 4; i++) {
+  legend.add(makeRow(palette[i], names[i]));
+  }  
+
+// add legend to map (alternatively you can also print the legend to the console)  
+Map.add(legend);  
+
+/////--------Adding legend to Maximum number of Consecutive Days--------////////////
+
+// Creates a color bar thumbnail image for use in legend from the given color palette
+function makeColorBarParams(numPalette) {
+  return {
+    bbox: [0, 0, 1, 0.1],
+    dimensions: '100x10',
+    format: 'png',
+    min: 0,
+    max: 1,
+    palette: numPalette,
+  };
+}
+
+// Create the colour bar for the legend
+var colorBar = ui.Thumbnail({
+  image: ee.Image.pixelLonLat().select(0),
+  params: makeColorBarParams(maxViz.palette),
+  style: {stretch: 'horizontal', margin: '0px 8px', maxHeight: '24px'},
+});
+
+// Create a panel with three numbers for the legend
+var legendLabels = ui.Panel({
+  widgets: [
+    ui.Label(maxViz.min, {margin: '4px 8px'}),
+    ui.Label(
+        ((maxViz.max-maxViz.min) / 2+maxViz.min),
+        {margin: '4px 8px', textAlign: 'center', stretch: 'horizontal'}),
+    ui.Label(maxViz.max, {margin: '4px 8px'})
+  ],
+  layout: ui.Panel.Layout.flow('horizontal')
+});
+
+// Legend title
+var legendTitle = ui.Label({
+  value: 'Maximum # Consecutive Days Without Data',
+  style: {fontWeight: 'bold'}
+});
+
+// Add the legendPanel to the map
+var legendPanel = ui.Panel([legendTitle, colorBar, legendLabels]);
+Map.add(legendPanel);
