@@ -1,0 +1,60 @@
+//Organizing final datasets for spatial distribtuion of cloud-free data 
+
+
+//Author: Africa I. Flores-Anderson 
+//email: africa.flores-anderson@mail.mcgill.ca 
+
+// Get a palette: a list of hex strings
+var palettes = require('users/gena/packages:palettes');
+var palette = palettes.kovesi.rainbow_bgyr_35_85_c72[7];
+
+//Cloud Free Observations 
+var path = 'projects/sentinelati-1547136065067/assets/Continent/'
+var sensorL = 'Landsat_ValidObs'
+var sensorS = 'S2_ValidObs'
+var all = 'all_ValidObs'
+var y2019 = '2019'
+var y2020 = '2020'
+var y2021 = '2021'
+var conti = ['Africa', 'Asia', 'Meso', 'Oceania', 'SouthAmerica']
+
+
+
+//All Valid (Cloud-Free) Observations 
+var all2017 = ee.Image('projects/sentinelati-1547136065067/assets/ValidObs/all_ValidObs2017')
+var all2018 = ee.Image('projects/sentinelati-1547136065067/assets/ValidObs/all_ValidObs2018')
+
+var imagelist = ee.List([]);
+for(var i = 0; i < conti.length; i++){
+  var id = conti[i]
+  var eeImage = ee.Image(path + all + y2019 + id);
+  var imagelist = imagelist.add(eeImage)
+  //print(imagelist, 'imagelist')
+  var all2019 = ee.ImageCollection(imagelist).mosaic()
+}
+for(var i = 0; i < conti.length; i++){
+  var id = conti[i]
+  var eeImage = ee.Image(path + all + y2020 + id);
+  var imagelist = imagelist.add(eeImage)
+  //print(imagelist, 'imagelist')
+  var all2020 = ee.ImageCollection(imagelist).mosaic()
+}
+for(var i = 0; i < conti.length; i++){
+  var id = conti[i]
+  var eeImage = ee.Image(path + all + y2021 + id);
+  var imagelist = imagelist.add(eeImage)
+  //print(imagelist, 'imagelist')
+  var all2021 = ee.ImageCollection(imagelist).mosaic()
+}
+
+
+//Visualize results
+Map.addLayer(all2017, {min:0, max:60, palette: palette}, 'All 2017');
+Map.addLayer(all2018, {min:0, max:60, palette: palette}, 'All 2018');
+Map.addLayer(all2019, {min:0, max:60, palette: palette}, 'All 2020');
+Map.addLayer(all2020, {min:0, max:60, palette: palette}, 'All 2020');
+Map.addLayer(all2021, {min:0, max:60, palette: palette}, 'All 2021');
+
+
+
+
