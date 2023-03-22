@@ -1,0 +1,54 @@
+//Setting the parameters of interest: Year of Interest and geographic area of Interest 
+//Change year of interest and continent 
+
+//Year of Interest
+var theYear = 2020
+
+var prevYear = theYear-1
+
+exports.prevYear = prevYear
+exports.theYear = theYear 
+
+print(prevYear, 'Previous Year')
+
+//Geographic area of Interest
+
+//-----calling datasets----
+var afn_ValidObs = require('users/africa_uah/ValidObs:1-InputDatasets').afn_ValidObs
+
+var forest = ee.Image("projects/sentinelati-1547136065067/assets/2010ForestMask_Tropics"),
+    Africa = ee.FeatureCollection("users/africa_uah/continents/Africa"),
+    Asia = ee.FeatureCollection("users/africa_uah/continents/Asia"),
+    Meso = ee.FeatureCollection("users/africa_uah/continents/North_America"),
+    Oceania = ee.FeatureCollection("users/africa_uah/continents/Oceania"),
+    SouthAmerica = ee.FeatureCollection("users/africa_uah/continents/South_America");
+
+var AfricaBox = Africa.geometry().convexHull();
+var AsiaBox = Asia.geometry().convexHull();
+var MesoBox = Meso.geometry().convexHull();
+var OceaniaBox = Oceania.geometry().bounds()
+var SouthAmericaBox = SouthAmerica.geometry().convexHull();
+
+var SouthAmericaIndex = ee.FeatureCollection("users/africa_uah/continents/SouthAmerica_grid")
+var AfricaIndex = ee.FeatureCollection("users/africa_uah/continents/Africa_grid")
+var AsiaIndex = ee.FeatureCollection("users/africa_uah/continents/asia_grid")
+var MesoIndex = ee.FeatureCollection("users/africa_uah/continents/Meso_grid2") //21 features
+var OceaniaIndex = ee.FeatureCollection("users/africa_uah/continents/Oceania_grid1") 
+
+//These need to be changed according to the continent to work on
+var IndexSize =  MesoIndex.size().getInfo()
+var IndexList =  MesoIndex.toList(IndexSize)
+var Length = IndexList.length();
+
+//print(Length , 'Index Length ')
+//Map.addLayer(MesoIndex, {}, 'grid')
+
+//------------------------------------
+
+////////Define geographic parameters 
+
+var studyArea =  MesoBox
+//var IndexList = IndexList
+
+exports.studyArea = studyArea
+exports.IndexList = IndexList

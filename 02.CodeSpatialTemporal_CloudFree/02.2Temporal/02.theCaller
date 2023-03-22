@@ -1,0 +1,283 @@
+//Calculate maximum waiting time and corresponding date. 
+
+//Find the True Max # of days without data for a given year and export data 
+
+//Description: This script will export data in small grids. Gridsa are created by region and are available in the 00.InputParamters script. 
+
+
+var inputParam = require('users/africa_uah/SpatialTemporal_CloudFree:02.CodeSpatialTemporal_CloudFree/02.2Temporal/00.InputParameters');
+var theYear = inputParam.theYear
+var areaInterest = inputParam.studyArea
+var IndexList = inputParam.IndexList
+
+var prevYearInfo = require('users/africa_uah/SpatialTemporal_CloudFree:02.CodeSpatialTemporal_CloudFree/02.2Temporal/01.previousYear');
+var lastValue = prevYearInfo.lastValue
+
+var TemporalIntervalModule = require('users/alemlakes/CommonCode:521.TemporalInterval/Current/521.TemporalInterval-Module-Current');
+var afn_makeYesNoCubeWrapper = TemporalIntervalModule.afn_makeYesNoCubeWrapper;
+var afn_findIntervalsInYesNoCube = TemporalIntervalModule.afn_findIntervalsInYesNoCube
+
+var MaxWithin = require('users/africa_uah/silvacarbon:521.TemporalInterval/10-2022/521.TemporalInterval_finalDatasets2021-2017Exports');
+var Max2021 = MaxWithin.Max2021
+var Max2020 = MaxWithin.Max2020
+var Max2019 = MaxWithin.Max2019
+var Max2018 = MaxWithin.Max2018
+var Max2017 = MaxWithin.Max2017
+//////// Beginning of calls.
+
+
+//var studyArea = studyAreaPolygonRoosevelt
+var studyArea = areaInterest
+//var studyArea = allSouthAmerica
+//var studyArea = Europe
+//var studyArea = Canada
+
+
+
+
+// var theYears = [2016, 2017, 2018, 2019, 2020, 2021, 2022]
+// var theYears = [2018]
+// var theYears = [2020]
+var theYear = theYear // needed by the cloud masker, for it to not be in a list
+// (for S2 that is)
+var firstDay = 1
+var lastDay = 365
+// needed for interpreting the cube:
+var theListOfDays = ee.List.sequence(firstDay, lastDay)
+
+var createCubeL7 = true
+var createCubeL8 = true
+var createCubeS2 = true
+
+var removeCloudPixels = true
+
+//////////////////////////////////////////////////////////////////////////////////////////
+// Do not change below this line 
+//////////////////////////////////////////////////////////////////////////////////////////
+
+var var_args = {}
+
+if (createCubeL7) {
+  var theIC = ee.ImageCollection('LANDSAT/LE07/C02/T1_TOA')
+  var sensor = 'L7' // used inside the cloud masker
+  
+  var_args.sensor = 'L7'
+    var_args.theIC = theIC
+    var_args.studyArea = studyArea
+    var_args.theYear = theYear
+    var_args.firstDay = firstDay
+    var_args.lastDay = lastDay
+    var_args.removeCloudPixels = removeCloudPixels
+
+    var theYNCubeL7 = afn_makeYesNoCubeWrapper(var_args)
+    var theYNCubeL7 = ee.Image(theYNCubeL7)
+    //Map.addLayer(theYNCubeL7.clip(studyArea), {}, "Cube Counter-L7", 1, 1)
+}
+
+var theInterpretedCube = afn_findIntervalsInYesNoCube(theYNCubeL7, theListOfDays)
+var theInterpretedCubeClip = theInterpretedCube.clip(studyArea)
+//Map.addLayer(theInterpretedCube.clip(studyArea), {}, "Interval for L7 only")
+
+var medianWait = theInterpretedCubeClip.reduce(ee.Reducer.median());
+//Map.addLayer(medianWait, {}, "Median days since an L7 image")
+var maximumWait = theInterpretedCubeClip.reduce(ee.Reducer.max());
+//Map.addLayer(maximumWait, {}, "Maximum time between L7 images")
+
+if (createCubeL8) {
+    // first, let's make a cube for L8.
+    var theIC = ee.ImageCollection('LANDSAT/LC08/C02/T1_TOA')
+    // Map.addLayer(theIC, {}, "L8 IC including clouds")
+    var sensor = 'L8' // used inside the cloud masker
+
+    // var sanitytesting = false
+    // if (sanitytesting) {
+    //     //first, do a sanity test
+    //     var oneDOY = ee.Number(132)
+    //     var oneDay = afn_makeYesNoLayerNested(oneDOY, ee.Image(0))
+    //     // returns DOY in the few places where there was an image, or 0 everywhere else.
+    //     // Two bands, because it returns as addbands onto the second param.
+    //     // So it will be 0 and 0 or 0 and the number.
+    //     Map.addLayer(oneDay.select(1).clip(studyArea), {}, "Sanity test L8") // will be the number
+    // }
+
+    var_args.sensor = 'L8'
+    var_args.theIC = theIC
+    var_args.studyArea = studyArea
+    var_args.theYear = theYear
+    var_args.firstDay = firstDay
+    var_args.lastDay = lastDay
+    var_args.removeCloudPixels = removeCloudPixels
+
+    var theYNCubeL8 = afn_makeYesNoCubeWrapper(var_args)
+    var theYNCubeL8 = ee.Image(theYNCubeL8)
+    //Map.addLayer(theYNCubeL8.clip(studyArea), {}, "Cube Counter-L8", 1, 1)
+
+    // var theYNCubeLatestL8 = theYNCubeL8.reduce('max')
+    // Map.addLayer(theYNCubeLatestL8.clip(studyArea), {}, "theYNCubeLatestDate-Landsat", 1, 1)
+} // end of landsat cube assembly
+
+var theInterpretedCube = afn_findIntervalsInYesNoCube(theYNCubeL8, theListOfDays)
+var theInterpretedCubeClip = theInterpretedCube.clip(studyArea)
+//Map.addLayer(theInterpretedCube.clip(studyArea), {}, "Interval for L8 only")
+
+var medianWait = theInterpretedCubeClip.reduce(ee.Reducer.median());
+//Map.addLayer(medianWait, {}, "Median days since an L8 image")
+var maximumWait = theInterpretedCubeClip.reduce(ee.Reducer.max());
+//Map.addLayer(maximumWait, {}, "Maximum time between L8 images")
+
+  
+
+if (createCubeS2) {
+    // S2
+    var theIC = ee.ImageCollection('COPERNICUS/S2_SR')
+    // Map.addLayer(theIC, {}, "S2 IC including clouds")
+
+    var sensor = 'S2' // used as a flag in the cloud masking.
+
+    var_args.theIC = theIC
+    var_args.sensor = sensor
+    // var sanitytesting = false
+    // if (sanitytesting) {
+    //     //first, do a sanity test
+    //     var oneDOY = ee.Number(132)
+    //     var oneDay = afn_makeYesNoLayerNested(oneDOY, ee.Image(0))
+    //     // returns DOY in the few places where there was an image, or 0 everywhere else.
+    //     // Two bands, because it returns as addbands onto the second param.
+    //     // So it will be 0 and 0 or 0 and the number. So we'll select the 
+    //     // second band to not confuse things in the Inspector
+    //     Map.addLayer(oneDay.select(1).clip(studyArea), {}, "Sanity test S2") // will be the number
+    // }
+
+    var_args.CloudCoverThresholdS2 = 40;
+
+    var_args.CLD_PRB_THRESH = 65
+    var_args.NIR_DRK_THRESH = 0.15
+    var_args.CLD_PRJ_DIST = 1
+    var_args.BUFFER = 50
+
+
+
+    var theYNCubeS2 = afn_makeYesNoCubeWrapper(var_args)
+    var theYNCubeS2 = ee.Image(theYNCubeS2)
+    //Map.addLayer(theYNCubeS2.clip(studyArea), {}, "Cube Counter-S2", 1, 1)
+
+    // var theYNCubeLatestS2 = theYNCubeS2.reduce('max')
+    // Map.addLayer(theYNCubeLatestS2.clip(studyArea), {}, "theYNCubeLatestDate-S2", 1, 1)
+} // end create s2 cube
+
+var theInterpretedCube = afn_findIntervalsInYesNoCube(theYNCubeS2, theListOfDays)
+var theInterpretedCubeClip = theInterpretedCube.clip(studyArea)
+//Map.addLayer(theInterpretedCube.clip(studyArea), {}, "Interval for S2 only")
+
+var medianWait = theInterpretedCubeClip.reduce(ee.Reducer.median());
+//Map.addLayer(medianWait, {}, "Median days since an S2 image")
+var maximumWait = theInterpretedCubeClip.reduce(ee.Reducer.max());
+//Map.addLayer(maximumWait, {}, "Maximum time between S2 images")
+  
+
+
+
+// now I have an S2 cube, a L7 cube, and an L8 cube.
+// add them to see how they look
+var thePairedYNCube0 = theYNCubeL7.max(theYNCubeL8)
+var thePairedYNCube = thePairedYNCube0.max(theYNCubeS2)// pick the bigger number,
+// so that if it is zero it's out, and replaced by the doy number. 
+//Map.addLayer(thePairedYNCube.clip(studyArea), {}, "thePairedYNCube", 1, 1)
+
+var theInterpretedCube = afn_findIntervalsInYesNoCube(thePairedYNCube, theListOfDays)
+var theInterpretedCubeClip = theInterpretedCube.clip(studyArea)
+print(theInterpretedCubeClip, 'theInterpretedCubeClip')
+Map.addLayer(studyArea, {}, 'study area')
+//Map.addLayer(theInterpretedCubeClip, {}, 'waiting time all sensors')
+
+//*****Calculate maximum waiting time and respective date *********//
+var daysYear = [];
+var N = 365
+for (var i = 1; i <= N; i++) {
+   daysYear.push(i);
+}
+//print(foo)
+var sequenceImage = ee.Image(daysYear)
+
+
+function firstpeak (image) {
+  // select all bands.
+  var allBands = image.select('constant.*');
+  var addOne = allBands.add(1)
+  var clean = addOne.updateMask(addOne.eq(1));
+  return clean.multiply(sequenceImage).subtract(1)
+}
+
+var cubeBandProcess = firstpeak(theInterpretedCubeClip)
+
+var firstPeakSelect = cubeBandProcess.reduce(ee.Reducer.firstNonNull()).rename('days')
+
+
+//print(cubeBandProcess, 'cubeBandProcess')
+//Map.addLayer(firstPeakSelect, {}, 'first select')
+
+
+var lastValue = lastValue.rename('days')
+var trueFirstPeak = lastValue.add(firstPeakSelect)
+var firstPeakDay = firstPeakSelect.rename('MaxDay')
+var firstPeakall = trueFirstPeak.addBands(firstPeakDay)
+
+Map.addLayer(firstPeakall, {}, 'First peak info')
+
+var maximumWait = theInterpretedCubeClip.reduce(ee.Reducer.max());
+//Map.addLayer(maximumWait, {}, "Maximum Wait within year for all sensors")
+
+var maxJulian = theInterpretedCubeClip.eq(maximumWait)
+var maxJulian2 = maxJulian.updateMask(maxJulian.eq(1))
+
+var maxJulianDay = maxJulian2.multiply(sequenceImage).subtract(1)
+var maxJulianDate = maxJulianDay.reduce(ee.Reducer.firstNonNull()).rename('MaxDay')
+
+//////HAVE TO CHANGE THIS DEPENDING ON -THE YEAR in Input Parameters//////////////////////
+//var maxDate = theInterpretedCubeClip.redu
+
+var realMaxDate = maximumWait.max(trueFirstPeak)
+
+var realDate0 = realMaxDate.select('max').eq(trueFirstPeak)
+                .multiply(firstPeakDay)
+
+var realDate1 = realMaxDate.select('max').eq(maximumWait)
+                .multiply(maxJulianDate)               
+
+var realDate = realDate0.max(realDate1).rename('MaxDay').toInt()
+
+var realMax = realMaxDate.addBands(realDate)
+
+
+print(realDate, 'REAL Date') 
+Map.addLayer(realDate, {min:0, max:365}, 'REAL DATE')
+
+Map.addLayer(realMaxDate, {min:0, max:100}, 'real max with date')
+
+//Map.addLayer(maxDate, {}, 'max # days within year')
+//Map.addLayer(maxJulianDate, {}, 'Date within year')
+Map.addLayer(realMax, {}, 'Final REAL MAX AND DATE')
+
+
+
+
+//Going through each of the features
+for(var i = 0; i <= 20; i++){
+//for (var i = 0; i <= length_; i++) {
+
+  var feature = ee.Feature(IndexList.get(i)) 
+  var tile_name = 'MesoGrid' + i.toString();
+  
+  Export.image.toAsset({
+    image: realMax,
+    description: 'maximumWaitDate' + theYear + tile_name,
+    assetId: 'Temporal03/maxWaitDate'+theYear+'/'+ tile_name,
+    crs: 'EPSG:4326',
+    scale: 30,
+    region: feature,
+    maxPixels: 460945551708,
+  
+  });  
+
+  
+}
