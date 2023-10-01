@@ -51,7 +51,7 @@ for(var i = 0; i < conti.length; i++){
 //Visualize results
 Map.addLayer(all2017, {min:0, max:60, palette: palette}, 'All 2017');
 Map.addLayer(all2018, {min:0, max:60, palette: palette}, 'All 2018');
-Map.addLayer(all2019, {min:0, max:60, palette: palette}, 'All 2020');
+Map.addLayer(all2019, {min:0, max:60, palette: palette}, 'All 2019');
 Map.addLayer(all2020, {min:0, max:60, palette: palette}, 'All 2020');
 Map.addLayer(all2021, {min:0, max:60, palette: palette}, 'All 2021');
 
